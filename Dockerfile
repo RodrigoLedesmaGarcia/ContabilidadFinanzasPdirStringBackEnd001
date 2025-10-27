@@ -1,13 +1,27 @@
-
 # ---------- Etapa 1: build ----------
 FROM eclipse-temurin:21-alpine AS build
+
 WORKDIR /app
+
+# Copia todo el código fuente
 COPY . .
+
+# ✅ Da permisos al wrapper de Maven (soluciona el error "Permission denied")
+RUN chmod +x mvnw
+
+# Compila el proyecto sin tests
 RUN ./mvnw clean package -DskipTests
 
 # ---------- Etapa 2: runtime ----------
 FROM eclipse-temurin:21-alpine
+
 WORKDIR /app
-COPY --from=build /app/target/ContabilidadFinanzasPdirStringBackEnd-0.0.1-SNAPSHOT.jar app.jar
+
+# Copia el JAR generado desde la etapa anterior
+COPY --from=build /app/target/*.jar app.jar
+
+# Expone el puerto que usa Spring Boot
 EXPOSE 8080
+
+# Comando para ejecutar la app
 ENTRYPOINT ["java", "-jar", "app.jar"]
